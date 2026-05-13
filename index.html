@@ -463,20 +463,22 @@
       <div class="card-title">🔑 开发者设置 <span class="tag">仅本地保存</span></div>
       <div style="margin-bottom:10px">
         <label>Gemini API Key</label>
+        <p style="font-size:11px;color:var(--text3);margin:4px 0 8px 0">用于 AI 拍照识别食物营养成分，开启后点击录入页拍照按钮即可使用</p>
         <div class="api-input-wrap">
           <input type="password" id="setGeminiKey" placeholder="AIza...">
           <button class="api-toggle-btn" onclick="toggleApiVis('setGeminiKey', this)">👁</button>
         </div>
-        <p style="font-size:11px;color:var(--text3);margin-top:4px">获取: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--primary)">aistudio.google.com</a></p>
+        <p style="font-size:11px;color:var(--text3);margin-top:4px">获取地址: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--primary)">aistudio.google.com</a> → Get API Key</p>
       </div>
       <div style="margin-bottom:10px">
-        <label>Supabase URL <span style="font-weight:400">(可选，不填则用本地)</span></label>
-        <input type="text" id="setSupabaseUrl" placeholder="https://xxx.supabase.co">
+        <label>Supabase 云同步 <span style="font-weight:400">(可选)</span></label>
+        <p style="font-size:11px;color:var(--text3);margin:4px 0 8px 0">开启后你的饮食数据会自动同步到云端，换手机/换设备也能查看。不填则仅本地存储</p>
+        <input type="text" id="setSupabaseUrl" placeholder="URL (可选)">
       </div>
       <div>
         <label>Supabase Anon Key <span style="font-weight:400">(可选)</span></label>
         <div class="api-input-wrap">
-          <input type="password" id="setSupabaseKey" placeholder="eyJ...">
+          <input type="password" id="setSupabaseKey" placeholder="eyJ... (可选)">
           <button class="api-toggle-btn" onclick="toggleApiVis('setSupabaseKey', this)">👁</button>
         </div>
       </div>
@@ -484,6 +486,7 @@
     <!-- 数据管理 -->
     <div class="card">
       <div class="card-title">🗂️ 数据管理</div>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:10px">所有数据仅存储在本地浏览器，换设备后可用导入恢复</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn btn-secondary" onclick="exportData()">📤 导出数据</button>
         <button class="btn btn-secondary" onclick="triggerImport()">📥 导入数据</button>
