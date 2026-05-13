@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#7fa87c">
+<title>BiteWise · 知食</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  :root {
+    --primary: #7fa87c;
+    --primary-light: #e8f3e7;
+    --primary-dark: #5a8a57;
+    --bg: #f5f7f5;
+    --surface: #ffffff;
+    --surface2: #f0f4f0;
+    --text: #1a1a1a;
+    --text2: #555;
+    --text3: #888;
+    --border: #e0e8df;
+    --danger: #e05555;
+    --warning: #e89a2a;
+    --info: #4a90d9;
+    --success: #4caf7d;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --nav-h: 64px;
+    --header-h: 56px;
+  }
+  [data-theme="white"] {
+    --primary: #4a4a4a;
+    --primary-light: #f5f5f5;
+    --primary-dark: #2a2a2a;
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --surface2: #f5f5f5;
+    --text: #1a1a1a;
+    --border: #e8e8e8;
+  }
+  [data-theme="dark"] {
+    --primary: #7fa87c;
+    --primary-light: #1e2e1d;
+    --primary-dark: #9fc99c;
+    --bg: #121712;
+    --surface: #1e261d;
+    --surface2: #242e23;
+    --text: #e8f0e7;
+    --text2: #a8c0a6;
+    --text3: #6a8a68;
+    --border: #2a3a29;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
+  #app { height: 100%; display: flex; flex-direction: column; }
+  .page { display: none; flex: 1; flex-direction: column; overflow: hidden; background: var(--bg); }
+  .page.active { display: flex; }
+  .header { height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 10px; flex-shrink: 0; }
+  .header-title { flex: 1; text-align: center; font-size: 17px; font-weight: 600; color: var(--text); }
+  .header-btn { min-width: 36px; height: 36px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--text2); font-size: 15px; white-space: nowrap; padding: 0 6px; }
+  .header-btn:active { background: var(--surface2); }
+  .scroll-area { flex: 1; overflow-y: auto; padding: 12px 16px; padding-bottom: calc(var(--nav-h) + 12px); }
+  .scroll-area::-webkit-scrollbar { display: none; }
+  .nav { height: var(--nav-h); background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: center; flex-shrink: 0; }
+  .nav-item { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; border: none; background: none; color: var(--text3); font-size: 10px; transition: color .2s; }
+  .nav-item.active { color: var(--primary); }
+  .nav-icon { font-size: 22px; line-height: 1; }
+  .nav-item.center-btn { position: relative; }
+  .nav-capture { width: 52px; height: 52px; background: var(--primary); border-radius: 50%; border: 3px solid var(--surface); display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; margin-bottom: 2px; box-shadow: 0 4px 16px rgba(127,168,124,.4); }
+  .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px; margin-bottom: 12px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 18px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .15s; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:active { background: var(--primary-dark); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:active { background: var(--border); }
+  .btn-danger { background: #fff0f0; color: var(--danger); border: 1px solid #ffd0d0; }
+  .btn-full { width: 100%; }
+  input, textarea, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s; }
+  input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+  textarea { resize: none; }
+  label { font-size: 13px; color: var(--text2); margin-bottom: 6px; display: block; }
+  .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-green { background: var(--primary-light); color: var(--primary-dark); }
+  .badge-orange { background: #fff3e0; color: #e67e22; }
+  .badge-red { background: #ffebee; color: var(--danger); }
+  .progress-bar { height: 10px; background: var(--surface2); border-radius: 5px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--primary); border-radius: 5px; transition: width .4s; }
+  .progress-fill.warning { background: var(--warning); }
+  .progress-fill.danger { background: var(--danger); }
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 9999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; display: none; align-items: flex-end; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-height: 90vh; overflow-y: auto; padding: 20px 16px; animation: slideUp .25s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .row { display: flex; gap: 10px; }
+  .col { flex: 1; }
+  .meal-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; }
+  .meal-card-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+  .meal-thumb { width: 60px; height: 60px; border-radius: var(--radius-sm); object-fit: cover; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; overflow: hidden; }
+  .meal-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .meal-info { flex: 1; min-width: 0; }
+  .meal-time { font-size: 12px; color: var(--text3); margin-bottom: 3px; }
+  .meal-desc { font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meal-meta { font-size: 12px; color: var(--text2); margin-top: 4px; display: flex; gap: 10px; }
+  .meal-actions { display: flex; gap: 8px; padding: 8px 14px; border-top: 1px solid var(--border); }
+  .seg-ctrl { display: flex; background: var(--surface2); border-radius: var(--radius-sm); padding: 3px; gap: 3px; }
+  .seg-btn { flex: 1; padding: 7px; text-align: center; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--text2); font-weight: 500; transition: all .2s; }
+  .seg-btn.active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+  .radio-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .radio-option { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 13px; transition: all .2s; }
+  .radio-option.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+  .food-item-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .food-item-row input { font-size: 13px; padding: 8px 10px; }
+  .food-item-row .kcal { font-size: 12px; color: var(--primary-dark); font-weight: 500; min-width: 56px; text-align: right; }
+  .food-item-row .del-btn { width: 28px; height: 28px; border: none; background: none; color: var(--text3); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .img-preview-wrap { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+  .img-preview-wrap::-webkit-scrollbar { display: none; }
+  .img-thumb { width: 80px; height: 80px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border); cursor: pointer; position: relative; overflow: hidden; }
+  .img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .img-thumb .del { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,.5); color: #fff; width: 18px; height: 18px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .img-add { width: 80px; height: 80px; border-radius: var(--radius-sm); border: 1.5px dashed var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text3); font-size: 11px; flex-shrink: 0; cursor: pointer; }
+  .img-add:active { background: var(--surface2); }
+  .mood-selector { display: flex; gap: 8px; justify-content: center; }
+  .mood-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid transparent; font-size: 24px; cursor: pointer; background: none; transition: all .2s; display: flex; align-items: center; justify-content: center; }
+  .mood-btn.selected { border-color: var(--primary); background: var(--primary-light); transform: scale(1.15); }
+  .duration-wrap { display: flex; align-items: center; gap: 10px; }
+  .duration-wrap input[type=range] { flex: 1; accent-color: var(--primary); }
+  .duration-num { min-width: 42px; text-align: center; font-size: 14px; font-weight: 500; }
+  .ai-comment { background: var(--primary-light); border-radius: var(--radius-sm); padding: 12px; font-size: 14px; line-height: 1.7; color: var(--primary-dark); border-left: 3px solid var(--primary); }
+  .loading-spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .stat-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .stat-bar-label { font-size: 13px; color: var(--text2); min-width: 30px; }
+  .stat-bar-track { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .stat-bar-fill { height: 100%; border-radius: 4px; background: var(--primary); }
+  .stat-bar-pct { font-size: 12px; color: var(--text3); min-width: 32px; text-align: right; }
+  .setting-row { display: flex; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--border); }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label { flex: 1; font-size: 14px; }
+  .setting-value { font-size: 13px; color: var(--text3); }
+  .template-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+  .template-item:last-child { border-bottom: none; }
+  .template-name { flex: 1; font-size: 14px; }
+  .nutrient-ring { display: flex; align-items: center; justify-content: center; gap: 24px; }
+  .ring-legend { display: flex; flex-direction: column; gap: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .switch { position: relative; display: inline-block; width: 46px; height: 26px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch-slider { position: absolute; inset: 0; background: var(--border); border-radius: 13px; cursor: pointer; transition: .2s; }
+  .switch-slider:before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+  input:checked + .switch-slider { background: var(--primary); }
+  input:checked + .switch-slider:before { transform: translateX(20px); }
+  .chart-wrap { height: 180px; position: relative; }
+  .img-full-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.9); z-index: 2000; display: none; align-items: center; justify-content: center; }
+  .img-full-overlay.show { display: flex; }
+  .img-full-overlay img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .tag { display: inline-flex; align-items: center; padding: 2px 8px; background: var(--surface2); border-radius: 20px; font-size: 12px; color: var(--text2); }
+  .summary-card { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius); padding: 16px; color: #fff; margin-bottom: 12px; }
+  .summary-card h2 { font-size: 28px; font-weight: 700; }
+  .summary-card p { font-size: 13px; opacity: .8; margin-top: 4px; }
+  .kcal-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .kcal-tile { background: var(--surface); border-radius: var(--radius-sm); padding: 12px 10px; text-align: center; border: 1px solid var(--border); }
+  .kcal-tile .val { font-size: 20px; font-weight: 600; color: var(--text); }
+  .kcal-tile .lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .api-input-wrap { position: relative; }
+  .api-input-wrap input { padding-right: 40px; font-family: monospace; font-size: 12px; }
+  .api-toggle-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 14px; color: var(--text3); }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ===== 首页 ===== -->
+<div id="page-home" class="page active">
+  <div class="header">
+    <button class="header-btn" onclick="navTo('settings')">⚙️</button>
+    <span class="header-title">BiteWise · 知食</span>
+    <button class="header-btn" id="searchBtn">🔍</button>
+  </div>
+  <div class="scroll-area" id="homeScroll">
+    <!-- 能量看板 -->
+    <div class="summary-card" id="energyCard">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <p style="font-size:13px;opacity:.8">今日能量摄入</p>
+          <h2 id="todayKcal">0</h2>
+          <p id="budgetText">/ 2000 kcal 目标</p>
+        </div>
+        <div style="text-align:right">
+          <p style="font-size:13px;opacity:.8">还剩</p>
+          <p id="remainKcal" style="font-size:22px;font-weight:600">2000</p>
+          <p style="font-size:11px;opacity:.7">kcal</p>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <div style="height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden">
+          <div id="energyProgress" style="height:100%;background:#fff;border-radius:4px;width:0;transition:width .5s"></div>
+        </div>
+      </div>
+    </div>
+    <!-- 三大营养素 -->
+    <div class="card">
+      <div class="card-title">🥗 今日营养素构成</div>
+      <div id="nutrientsDisplay">
+        <div class="stat-bar-row"><span class="stat-bar-label">碳水</span><div class="stat-bar-track"><div class="stat-bar-fill" id="carbBar" style="width:0%;background:#f0a832"></div></div><span class="stat-bar-pct" id="carbPct">--</span></div>
+        <div class="stat-bar-row"><span class="stat-bar-label">蛋白</span><div class="stat-bar-track"><div class="stat-bar-fill" id="protBar" style="width:0%;background:#4a90d9"></div></div><span class="stat-bar-pct" id="protPct">--</span></div>
+        <div class="stat-bar-row"><span class="stat-bar-label">脂肪</span><div class="stat-bar-track"><div class="stat-bar-fill" id="fatBar" style="width:0%;background:#e05555"></div></div><span class="stat-bar-pct" id="fatPct">--</span></div>
+      </div>
+    </div>
+    <!-- 最新一餐 -->
+    <div id="latestMealSection" class="card" style="display:none">
+      <div class="card-title">📸 最新一餐 <span id="latestMealTime" class="tag"></span></div>
+      <div id="latestMealImages" class="img-preview-wrap" style="margin-bottom:10px"></div>
+      <p id="latestMealDesc" style="font-size:14px;color:var(--text2);margin-bottom:8px"></p>
+      <div style="display:flex;gap:14px;font-size:13px;color:var(--text3)">
+        <span id="latestKcalText">🔥 -- kcal</span>
+        <span id="latestDurationText">🕒 -- min</span>
+        <span id="latestMoodText"></span>
+      </div>
+      <div class="divider"></div>
+      <button class="btn btn-secondary btn-full" onclick="navTo('logs')">查看今日全部 →</button>
+    </div>
+    <!-- AI 点评 -->
+    <div id="aiCommentCard" class="card" style="display:none">
+      <div class="card-title">💬 AI 营养师点评 <span id="aiStyleBadge" class="badge badge-green"></span></div>
+      <div id="aiCommentText" class="ai-comment"></div>
+      <div style="margin-top:10px;text-align:right">
+        <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="refreshAIComment()">🔄 换一条</button>
+      </div>
+    </div>
+    <!-- 空状态 -->
+    <div id="homeEmpty" class="empty-state">
+      <div class="icon">🍽️</div>
+      <p>还没有记录，点下方相机开始第一餐！</p>
+    </div>
+  </div>
+  <nav class="nav">
+    <button class="nav-item" onclick="navTo('home')" id="nav-home">
+      <span class="nav-icon">📊</span><span>看板</span>
+    </button>
+    <button class="nav-item center-btn" onclick="navTo('entry')">
+      <div class="nav-capture">📷</div>
+    </button>
+    <button class="nav-item" onclick="navTo('history')" id="nav-history">
+      <span class="nav-icon">📅</span><span>历史</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ===== 录入页 ===== -->
+<div id="page-entry" class="page">
+  <div class="header">
+    <button class="header-btn" onclick="navTo('home')">‹ 返回</button>
+    <span class="header-title">记录这顿饭</span>
+    <button class="header-btn" id="deleteMealBtn" style="color:var(--danger);display:none" onclick="deleteCurrentEntry()">🗑️</button>
+  </div>
+  <div class="scroll-area">
+    <!-- 图片上传 -->
+    <div class="card">
+      <div class="card-title">📸 上传图片 <span style="font-weight:400;color:var(--text3)">(最多 6 张)</span></div>
+      <div class="img-preview-wrap" id="entryImgList">
+        <div class="img-add" onclick="triggerImgInput()">
+          <span style="font-size:28px">+</span>
+          <span>拍照/相册</span>
+        </div>
+      </div>
+      <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none" onchange="handleImgUpload(event)">
+    </div>
+    <!-- 心情文字 -->
+    <div class="card">
+      <label>📝 备注一下这顿饭</label>
+      <textarea id="mealDesc" rows="2" placeholder="外卖/自己做/加班餐…"></textarea>
+    </div>
+    <!-- 识别模式 -->
+    <div class="card">
+      <div class="card-title">💡 识别模式</div>
+      <div class="seg-ctrl" style="margin-bottom:12px">
+        <button class="seg-btn active" id="modeAI" onclick="switchMode('ai')">🤖 极速 AI</button>
+        <button class="seg-btn" id="modeChef" onclick="switchMode('chef')">📋 食材清单</button>
+      </div>
+      <!-- AI 模式 -->
+      <div id="aiModePanel">
+        <button class="btn btn-primary btn-full" id="recognizeBtn" onclick="doRecognize()">
+          <span class="loading-spinner" id="recogSpinner" style="display:none"></span>
+          ✨ AI 识别营养成分
+        </button>
+        <div id="aiResult" style="margin-top:12px;display:none">
+          <div class="row" style="margin-bottom:10px">
+            <div class="col"><label>总热量 (kcal)</label><input type="number" id="aiTotalKcal" oninput="recalcAI()"></div>
+            <div class="col"><label>碳水 (g)</label><input type="number" id="aiCarb" oninput="recalcAI()"></div>
+          </div>
+          <div class="row">
+            <div class="col"><label>蛋白 (g)</label><input type="number" id="aiProt" oninput="recalcAI()"></div>
+            <div class="col"><label>脂肪 (g)</label><input type="number" id="aiFat" oninput="recalcAI()"></div>
+          </div>
+          <div id="aiRecogDesc" style="margin-top:8px;font-size:13px;color:var(--text3)"></div>
+        </div>
+      </div>
+      <!-- Chef 模式 -->
+      <div id="chefModePanel" style="display:none">
+        <div id="foodItemList"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="addFoodItem()">+ 添加食材</button>
+          <button class="btn btn-secondary" style="font-size:13px" onclick="saveAsTemplate()">⭐ 存为常用</button>
+        </div>
+        <div style="margin-top:10px;padding:10px;background:var(--primary-light);border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:14px;color:var(--text2)">合计热量</span>
+          <span id="chefTotal" style="font-size:20px;font-weight:600;color:var(--primary-dark)">0 kcal</span>
+        </div>
+      </div>
+    </div>
+    <!-- 时间 -->
+    <div class="card">
+      <div class="row">
+        <div class="col">
+          <label>📅 进餐时间</label>
+          <input type="datetime-local" id="mealTime">
+        </div>
+      </div>
+    </div>
+    <!-- 进食时长 -->
+    <div class="card">
+      <label>🕒 进食时长 <span id="durationHint" style="color:var(--text3);font-weight:400"></span></label>
+      <div class="duration-wrap">
+        <input type="range" id="durationSlider" min="1" max="90" value="20" oninput="updateDuration()">
+        <div class="duration-num"><span id="durationVal">20</span> min</div>
+      </div>
+    </div>
+    <!-- 心情 -->
+    <div class="card">
+      <label>🎭 当时的心情</label>
+      <div class="mood-selector">
+        <button class="mood-btn" data-mood="1" onclick="selectMood(1)">😫</button>
+        <button class="mood-btn" data-mood="2" onclick="selectMood(2)">😔</button>
+        <button class="mood-btn" data-mood="3" onclick="selectMood(3)">😐</button>
+        <button class="mood-btn selected" data-mood="4" onclick="selectMood(4)">😊</button>
+        <button class="mood-btn" data-mood="5" onclick="selectMood(5)">😍</button>
+      </div>
+    </div>
+    <!-- 保存 -->
+    <button class="btn btn-primary btn-full" style="height:50px;font-size:16px;margin-bottom:8px" onclick="saveMeal()">✅ 确认保存</button>
+  </div>
+</div>
+
+<!-- ===== 今日明细 ===== -->
+<div id="page-logs" class="page">
+  <div class="header">
+    <button class="header-btn" onclick="navTo('home')">‹ 返回</button>
+    <span class="header-title" id="logsTitle">今日饮食日志</span>
+    <button class="header-btn" id="logDateBtn" onclick="showDatePicker()">📅</button>
+  </div>
+  <div class="scroll-area" id="logsList">
+    <div class="empty-state"><div class="icon">📓</div><p>这天还没有记录</p></div>
+  </div>
+</div>
+
+<!-- ===== 历史统计 ===== -->
+<div id="page-history" class="page">
+  <div class="header">
+    <button class="header-btn" onclick="showWeekPicker()">📅</button>
+    <span class="header-title">历史趋势</span>
+    <button class="header-btn" onclick="exportData()">📥</button>
+  </div>
+  <div class="scroll-area">
+    <div class="card">
+      <div class="card-title">📈 热量摄入趋势</div>
+      <div class="seg-ctrl" style="margin-bottom:12px">
+        <button class="seg-btn active" id="histWeek" onclick="switchHistView('week')">本周</button>
+        <button class="seg-btn" id="histMonth" onclick="switchHistView('month')">本月</button>
+      </div>
+      <div class="chart-wrap"><canvas id="trendChart" role="img" aria-label="热量趋势折线图">热量趋势图</canvas></div>
+    </div>
+    <div class="card" id="statsNutrientCard">
+      <div class="card-title">🥗 营养素构成 <span id="statsNutrientPeriod" class="tag">周平均</span></div>
+      <div class="stat-bar-row"><span class="stat-bar-label">碳水</span><div class="stat-bar-track"><div class="stat-bar-fill" id="sCarb" style="width:50%;background:#f0a832"></div></div><span class="stat-bar-pct" id="sCarbPct">50%</span></div>
+      <div class="stat-bar-row"><span class="stat-bar-label">蛋白</span><div class="stat-bar-track"><div class="stat-bar-fill" id="sProt" style="width:30%;background:#4a90d9"></div></div><span class="stat-bar-pct" id="sProtPct">30%</span></div>
+      <div class="stat-bar-row"><span class="stat-bar-label">脂肪</span><div class="stat-bar-track"><div class="stat-bar-fill" id="sFat" style="width:20%;background:#e05555"></div></div><span class="stat-bar-pct" id="sFatPct">20%</span></div>
+    </div>
+    <div class="card" id="statsSummaryCard">
+      <div class="card-title">📝 统计总结</div>
+      <div id="statsSummaryText" class="ai-comment" style="font-size:13px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 最近记录</div>
+      <div id="recentLogs"></div>
+    </div>
+  </div>
+  <nav class="nav">
+    <button class="nav-item" onclick="navTo('home')" id="nav-home2">
+      <span class="nav-icon">📊</span><span>看板</span>
+    </button>
+    <button class="nav-item center-btn" onclick="navTo('entry')">
+      <div class="nav-capture">📷</div>
+    </button>
+    <button class="nav-item active" onclick="navTo('history')" id="nav-history2">
+      <span class="nav-icon">📅</span><span>历史</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ===== 设置 ===== -->
+<div id="page-settings" class="page">
+  <div class="header">
+    <button class="header-btn" onclick="navBack()">‹ 返回</button>
+    <span class="header-title">设置中心</span>
+  </div>
+  <div class="scroll-area">
+    <!-- 个人档案 -->
+    <div class="card">
+      <div class="card-title">👤 个人档案</div>
+      <div class="row" style="margin-bottom:10px">
+        <div class="col"><label>身高 (cm)</label><input type="number" id="setHeight" placeholder="175"></div>
+        <div class="col"><label>体重 (kg)</label><input type="number" id="setWeight" placeholder="70"></div>
+      </div>
+      <div>
+        <label>每日热量目标 (kcal)</label>
+        <input type="number" id="setKcalGoal" placeholder="2000">
+      </div>
+      <div style="margin-top:10px">
+        <label>目标</label>
+        <select id="setGoal">
+          <option value="reduce">减脂中</option>
+          <option value="maintain">维持体重</option>
+          <option value="gain">增肌中</option>
+        </select>
+      </div>
+    </div>
+    <!-- 主题 -->
+    <div class="card">
+      <div class="card-title">🎨 UI 主题</div>
+      <div class="radio-group" id="themeGroup">
+        <div class="radio-option selected" data-theme="green" onclick="selectTheme('green')">🌿 莫兰迪绿</div>
+        <div class="radio-option" data-theme="white" onclick="selectTheme('white')">⬜ 极简白</div>
+        <div class="radio-option" data-theme="dark" onclick="selectTheme('dark')">🌑 深邃黑</div>
+      </div>
+    </div>
+    <!-- AI 风格 -->
+    <div class="card">
+      <div class="card-title">💬 AI 点评风格</div>
+      <div class="radio-group" id="aiStyleGroup">
+        <div class="radio-option" data-style="strict" onclick="selectAIStyle('strict')">💪 严格教练</div>
+        <div class="radio-option selected" data-style="warm" onclick="selectAIStyle('warm')">🤗 暖心搭子</div>
+        <div class="radio-option" data-style="toxic" onclick="selectAIStyle('toxic')">😈 毒舌好友</div>
+      </div>
+    </div>
+    <!-- 模板库 -->
+    <div class="card">
+      <div class="card-title">⭐ 我的常用菜/模板库</div>
+      <div id="templateList"><p style="font-size:13px;color:var(--text3)">还没有保存任何模板</p></div>
+    </div>
+    <!-- API 配置 -->
+    <div class="card">
+      <div class="card-title">🔑 开发者设置 <span class="tag">仅本地保存</span></div>
+      <div style="margin-bottom:10px">
+        <label>Gemini API Key</label>
+        <div class="api-input-wrap">
+          <input type="password" id="setGeminiKey" placeholder="AIza...">
+          <button class="api-toggle-btn" onclick="toggleApiVis('setGeminiKey', this)">👁</button>
+        </div>
+        <p style="font-size:11px;color:var(--text3);margin-top:4px">获取: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--primary)">aistudio.google.com</a></p>
+      </div>
+      <div style="margin-bottom:10px">
+        <label>Supabase URL <span style="font-weight:400">(可选，不填则用本地)</span></label>
+        <input type="text" id="setSupabaseUrl" placeholder="https://xxx.supabase.co">
+      </div>
+      <div>
+        <label>Supabase Anon Key <span style="font-weight:400">(可选)</span></label>
+        <div class="api-input-wrap">
+          <input type="password" id="setSupabaseKey" placeholder="eyJ...">
+          <button class="api-toggle-btn" onclick="toggleApiVis('setSupabaseKey', this)">👁</button>
+        </div>
+      </div>
+    </div>
+    <!-- 数据管理 -->
+    <div class="card">
+      <div class="card-title">🗂️ 数据管理</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="exportData()">📤 导出数据</button>
+        <button class="btn btn-secondary" onclick="triggerImport()">📥 导入数据</button>
+        <button class="btn btn-danger" onclick="clearAllData()">🗑️ 清除所有</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+    <button class="btn btn-primary btn-full" style="height:50px;font-size:16px;margin-bottom:8px" onclick="saveSettings()">💾 保存并应用</button>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- 图片全屏预览 -->
+<div class="img-full-overlay" id="imgFullOverlay" onclick="closeImgFull()">
+  <img id="imgFullImg" src="" alt="">
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 模态框 -->
+<div class="modal-overlay" id="templateModal">
+  <div class="modal">
+    <div class="modal-title">保存为常用菜 <button onclick="closeModal('templateModal')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3)">×</button></div>
+    <label>模板名称</label>
+    <input type="text" id="templateName" placeholder="如：我的鸡胸肉沙拉" style="margin-bottom:16px">
+    <button class="btn btn-primary btn-full" onclick="confirmSaveTemplate()">✅ 保存</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="templatePickModal">
+  <div class="modal">
+    <div class="modal-title">选择模板 <button onclick="closeModal('templatePickModal')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3)">×</button></div>
+    <div id="templatePickList"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ===================== STATE & STORAGE =====================
+const STORAGE_KEY = 'bitewise_meals';
+const SETTINGS_KEY = 'bitewise_settings';
+const TEMPLATES_KEY = 'bitewise_templates';
+
+let state = {
+  meals: [],
+  settings: {
+    height: 175, weight: 70, kcalGoal: 2000, goal: 'reduce',
+    theme: 'green', aiStyle: 'warm',
+    geminiKey: '', supabaseUrl: '', supabaseKey: ''
+  },
+  templates: [],
+  currentPage: 'home',
+  prevPage: 'home',
+  entryMode: 'ai',
+  selectedMood: 4,
+  currentImages: [],
+  foodItems: [],
+  aiResultData: null,
+  editingMealId: null,
+  historyView: 'week',
+  logsDate: todayStr(),
+  trendChart: null
+};
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+function loadAll() {
+  try { state.meals = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { state.meals = []; }
+  try { state.settings = Object.assign(state.settings, JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}); } catch(e) {}
+  try { state.templates = JSON.parse(localStorage.getItem(TEMPLATES_KEY)) || []; } catch(e) { state.templates = []; }
+}
+function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.meals)); }
+function saveSettings() {
+  const s = state.settings;
+  s.height = +$id('setHeight').value || s.height;
+  s.weight = +$id('setWeight').value || s.weight;
+  s.kcalGoal = +$id('setKcalGoal').value || s.kcalGoal;
+  s.goal = $id('setGoal').value;
+  s.geminiKey = $id('setGeminiKey').value.trim();
+  s.supabaseUrl = $id('setSupabaseUrl').value.trim();
+  s.supabaseKey = $id('setSupabaseKey').value.trim();
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(state.templates));
+  showToast('✅ 设置已保存！');
+  applyTheme(s.theme);
+}
+function saveTemplates() { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(state.templates)); }
+
+// ===================== HELPERS =====================
+function $id(id) { return document.getElementById(id); }
+function showToast(msg, dur=2000) {
+  const t = $id('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), dur);
+}
+function showModal(id) { $id(id).classList.add('show'); }
+function closeModal(id) { $id(id).classList.remove('show'); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function moodEmoji(m) { return ['','😫','😔','😐','😊','😍'][m] || '😐'; }
+function formatTime(ts) {
+  const d = new Date(ts);
+  const h = d.getHours().toString().padStart(2,'0');
+  const m = d.getMinutes().toString().padStart(2,'0');
+  return h+':'+m;
+}
+function formatDate(ts) {
+  const d = new Date(ts);
+  return `${d.getMonth()+1}月${d.getDate()}日`;
+}
+function getMealTypeName(ts) {
+  const h = new Date(ts).getHours();
+  if(h < 10) return '早餐';
+  if(h < 14) return '午餐';
+  if(h < 17) return '下午茶';
+  return '晚餐';
+}
+function getTodayMeals() {
+  const today = todayStr();
+  return state.meals.filter(m => m.timestamp.startsWith(today)).sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
+}
+function getDayMeals(dateStr) {
+  return state.meals.filter(m => m.timestamp.startsWith(dateStr)).sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
+}
+
+// ===================== NAVIGATION =====================
+function navTo(page) {
+  state.prevPage = state.currentPage;
+  state.currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  $id('page-'+page).classList.add('active');
+  if(page === 'home') refreshHome();
+  if(page === 'logs') renderLogs();
+  if(page === 'history') renderHistory();
+  if(page === 'settings') loadSettingsUI();
+  if(page === 'entry') initEntryPage();
+}
+function navBack() { navTo(state.prevPage || 'home'); }
+
+// ===================== HOME PAGE =====================
+function refreshHome() {
+  const meals = getTodayMeals();
+  const goal = state.settings.kcalGoal || 2000;
+  const total = meals.reduce((s,m) => s + (m.total_calories||0), 0);
+  const carb = meals.reduce((s,m)=>s+(m.nutrients?.carb||0),0);
+  const prot = meals.reduce((s,m)=>s+(m.nutrients?.prot||0),0);
+  const fat  = meals.reduce((s,m)=>s+(m.nutrients?.fat||0),0);
+  const nutriTotal = carb + prot + fat;
+  $id('todayKcal').textContent = Math.round(total);
+  $id('budgetText').textContent = `/ ${goal} kcal 目标`;
+  $id('remainKcal').textContent = Math.max(0, goal - total);
+  const pct = Math.min(100, total / goal * 100);
+  const bar = $id('energyProgress');
+  bar.style.width = pct + '%';
+  if(nutriTotal > 0) {
+    const carbPct = Math.round(carb / nutriTotal * 100);
+    const protPct = Math.round(prot / nutriTotal * 100);
+    const fatPct = 100 - carbPct - protPct;
+    $id('carbBar').style.width = carbPct+'%'; $id('carbPct').textContent = carbPct+'%';
+    $id('protBar').style.width = protPct+'%'; $id('protPct').textContent = protPct+'%';
+    $id('fatBar').style.width = fatPct+'%'; $id('fatPct').textContent = fatPct+'%';
+  } else {
+    $id('carbBar').style.width = '0%'; $id('carbPct').textContent = '--';
+    $id('protBar').style.width = '0%'; $id('protPct').textContent = '--';
+    $id('fatBar').style.width = '0%'; $id('fatPct').textContent = '--';
+  }
+  $id('homeEmpty').style.display = meals.length === 0 ? 'block' : 'none';
+  if(meals.length > 0) {
+    const latest = meals[0];
+    $id('latestMealSection').style.display = 'block';
+    $id('latestMealTime').textContent = formatTime(latest.timestamp) + ' ' + getMealTypeName(latest.timestamp);
+    const imgWrap = $id('latestMealImages');
+    imgWrap.innerHTML = '';
+    (latest.images||[]).slice(0,3).forEach(src => {
+      const d = document.createElement('div');
+      d.className = 'img-thumb';
+      const img = document.createElement('img'); img.src = src; img.loading = 'lazy';
+      d.appendChild(img); d.onclick = ()=>openImgFull(src);
+      imgWrap.appendChild(d);
+    });
+    $id('latestMealDesc').textContent = latest.description || '';
+    $id('latestKcalText').textContent = `🔥 ${latest.total_calories||0} kcal`;
+    $id('latestDurationText').textContent = `🕒 ${latest.duration?.actual||'--'} min`;
+    $id('latestMoodText').textContent = moodEmoji(latest.mood_score);
+    showAIComment(latest);
+  } else {
+    $id('latestMealSection').style.display = 'none';
+    $id('aiCommentCard').style.display = 'none';
+  }
+}
+
+function showAIComment(meal) {
+  const styles = {strict:'💪 严格教练', warm:'🤗 暖心搭子', toxic:'😈 毒舌好友'};
+  const style = state.settings.aiStyle || 'warm';
+  $id('aiCommentCard').style.display = 'block';
+  $id('aiStyleBadge').textContent = styles[style];
+  const cached = localStorage.getItem('bitewise_comment_'+meal.id);
+  if(cached) { $id('aiCommentText').textContent = cached; return; }
+  const key = state.settings.geminiKey;
+  if(!key) {
+    const fallback = genFallbackComment(meal, style);
+    $id('aiCommentText').textContent = fallback;
+    return;
+  }
+  $id('aiCommentText').innerHTML = '<span class="loading-spinner"></span> 生成中…';
+  callGeminiComment(meal, style).then(text => {
+    $id('aiCommentText').textContent = text;
+    localStorage.setItem('bitewise_comment_'+meal.id, text);
+  }).catch(()=>{
+    $id('aiCommentText').textContent = genFallbackComment(meal, style);
+  });
+}
+
+function genFallbackComment(meal, style) {
+  const goal = state.settings.kcalGoal || 2000;
+  const ratio = meal.total_calories / goal;
+  const dur = meal.duration?.actual || 15;
+  const comments = {
+    warm: [
+      ratio < .3 ? '这顿吃得有点少哦，注意能量补充！💕' : ratio > .6 ? '吃得略多哦，但没关系，下一餐调整一下就好～' : '这顿吃得很均衡呀！保持这个节奏！🌿',
+      dur < 10 ? '慢慢吃哦，细嚼慢咽对消化更好💝' : '进食节奏不错，给自己点个赞！'
+    ],
+    strict: [
+      ratio > .6 ? '⚠️ 注意！此餐热量偏高，建议增加有氧运动补偿！' : ratio < .2 ? '热量摄入严重不足，会导致肌肉流失，请及时补充！' : '热量控制合格，继续执行计划！',
+      dur < 10 ? '进食速度过快！至少需要20分钟才能产生饱腹感！' : '进食时长达标。'
+    ],
+    toxic: [
+      ratio > .6 ? '🙄 又超标了？意志力呢？' : ratio < .2 ? '这就吃这点？怪不得没精神' : '哦，今天还挺克制的嘛，出乎意料。',
+      dur < 10 ? '吃饭又跟打仗一样，不怕噎着啊？' : '不错，这次没有狼吞虎咽。'
+    ]
+  };
+  const arr = comments[style] || comments.warm;
+  return arr[0] + (dur ? ' ' + arr[1] : '');
+}
+
+async function callGeminiComment(meal, style) {
+  const styleDesc = {strict:'严厉的健身教练，直接指出问题', warm:'温柔体贴的闺蜜，给予鼓励和关怀', toxic:'幽默毒舌但真心关心的好友'};
+  const prompt = `你是一位${styleDesc[style]}。用户刚刚记录了一顿饭：热量${meal.total_calories}kcal，进食${meal.duration?.actual||15}分钟，心情评分${meal.mood_score}/5。今日目标${state.settings.kcalGoal||2000}kcal。请用50字以内给出简短点评，语气符合你的角色设定。`;
+  const resp = await callGeminiText(prompt);
+  return resp;
+}
+
+async function refreshAIComment() {
+  const meals = getTodayMeals();
+  if(!meals.length) return;
+  const latest = meals[0];
+  localStorage.removeItem('bitewise_comment_'+latest.id);
+  showAIComment(latest);
+}
+
+// ===================== ENTRY PAGE =====================
+function initEntryPage() {
+  if(state.editingMealId) {
+    $id('deleteMealBtn').style.display = 'flex';
+  } else {
+    $id('deleteMealBtn').style.display = 'none';
+    state.currentImages = [];
+    state.foodItems = [];
+    state.aiResultData = null;
+    state.selectedMood = 4;
+    $id('mealDesc').value = '';
+    $id('durationSlider').value = 20;
+    $id('durationVal').textContent = '20';
+    $id('durationHint').textContent = '';
+    $id('aiResult').style.display = 'none';
+    const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    $id('mealTime').value = now.toISOString().slice(0,16);
+    document.querySelectorAll('.mood-btn').forEach(b => {
+      b.classList.toggle('selected', +b.dataset.mood === 4);
+    });
+    switchMode('ai');
+    renderEntryImages();
+    renderFoodItems();
+  }
+}
+
+function triggerImgInput() { $id('imgFileInput').click(); }
+
+function handleImgUpload(e) {
+  const files = Array.from(e.target.files);
+  const remaining = 6 - state.currentImages.length;
+  files.slice(0, remaining).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      state.currentImages.push(ev.target.result);
+      renderEntryImages();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+function renderEntryImages() {
+  const wrap = $id('entryImgList');
+  wrap.innerHTML = '';
+  state.currentImages.forEach((src, i) => {
+    const d = document.createElement('div'); d.className = 'img-thumb';
+    const img = document.createElement('img'); img.src = src;
+    const del = document.createElement('div'); del.className = 'del'; del.textContent = '×';
+    del.onclick = (ev) => { ev.stopPropagation(); state.currentImages.splice(i,1); renderEntryImages(); };
+    img.onclick = () => openImgFull(src);
+    d.appendChild(img); d.appendChild(del);
+    wrap.appendChild(d);
+  });
+  if(state.currentImages.length < 6) {
+    const add = document.createElement('div'); add.className = 'img-add';
+    add.innerHTML = '<span style="font-size:28px">+</span><span>拍照/相册</span>';
+    add.onclick = triggerImgInput;
+    wrap.appendChild(add);
+  }
+}
+
+function switchMode(mode) {
+  state.entryMode = mode;
+  $id('modeAI').classList.toggle('active', mode==='ai');
+  $id('modeChef').classList.toggle('active', mode==='chef');
+  $id('aiModePanel').style.display = mode==='ai' ? 'block' : 'none';
+  $id('chefModePanel').style.display = mode==='chef' ? 'block' : 'none';
+  if(mode==='chef' && state.foodItems.length===0) addFoodItem();
+}
+
+async function doRecognize() {
+  if(!state.currentImages.length) { showToast('请先上传图片'); return; }
+  const key = state.settings.geminiKey;
+  if(!key) { showToast('请先在设置中填入 Gemini API Key'); return; }
+  $id('recogSpinner').style.display = 'inline-block';
+  $id('recognizeBtn').disabled = true;
+  $id('aiResult').style.display = 'none';
+  try {
+    const desc = $id('mealDesc').value || '';
+    const data = await callGeminiRecognize(state.currentImages, desc);
+    state.aiResultData = data;
+    $id('aiTotalKcal').value = data.total_calories || '';
+    $id('aiCarb').value = data.nutrients?.carb || '';
+    $id('aiProt').value = data.nutrients?.prot || '';
+    $id('aiFat').value  = data.nutrients?.fat  || '';
+    $id('aiRecogDesc').textContent = data.food_list ? '识别到：' + data.food_list.map(f=>f.name).join('、') : '';
+    $id('aiResult').style.display = 'block';
+    updateSuggestedDuration(data);
+    showToast('✅ 识别成功！');
+  } catch(err) {
+    showToast('识别失败：'+(err.message||'请检查 API Key'), 3000);
+  } finally {
+    $id('recogSpinner').style.display = 'none';
+    $id('recognizeBtn').disabled = false;
+  }
+}
+
+function recalcAI() {
+  const c = +$id('aiCarb').value || 0;
+  const p = +$id('aiProt').value || 0;
+  const f = +$id('aiFat').value || 0;
+  const auto = Math.round(c*4 + p*4 + f*9);
+  if(!$id('aiTotalKcal').value || auto > 0) $id('aiTotalKcal').value = auto;
+}
+
+function addFoodItem(name='', weight=100, kcal=0) {
+  const id = uid();
+  state.foodItems.push({ id, name, weight, kcal });
+  renderFoodItems();
+}
+
+function renderFoodItems() {
+  const list = $id('foodItemList');
+  list.innerHTML = '';
+  state.foodItems.forEach((item, idx) => {
+    const row = document.createElement('div'); row.className = 'food-item-row';
+    row.innerHTML = `
+      <input type="text" placeholder="食材名称" value="${item.name}" style="flex:2" onchange="updateFoodItem(${idx},'name',this.value)">
+      <input type="number" placeholder="克数" value="${item.weight||''}" style="flex:1;min-width:0" onchange="updateFoodItemWeight(${idx},this.value)">
+      <span class="kcal">🔥${item.kcal} kcal</span>
+      <button class="del-btn" onclick="removeFoodItem(${idx})">×</button>
+    `;
+    list.appendChild(row);
+  });
+  updateChefTotal();
+}
+
+function updateFoodItem(idx, key, val) { state.foodItems[idx][key] = val; }
+
+function updateFoodItemWeight(idx, val) {
+  state.foodItems[idx].weight = +val || 0;
+  estimateFoodKcal(idx);
+}
+
+async function estimateFoodKcal(idx) {
+  const item = state.foodItems[idx];
+  if(!item.name || !item.weight) return;
+  const key = state.settings.geminiKey;
+  if(key) {
+    try {
+      const kcal = await callGeminiKcal(item.name, item.weight);
+      state.foodItems[idx].kcal = kcal;
+    } catch(e) {
+      state.foodItems[idx].kcal = Math.round(item.weight * 1.5);
+    }
+  } else {
+    state.foodItems[idx].kcal = Math.round(item.weight * 1.5);
+  }
+  renderFoodItems();
+}
+
+function removeFoodItem(idx) { state.foodItems.splice(idx, 1); renderFoodItems(); }
+
+function updateChefTotal() {
+  const total = state.foodItems.reduce((s, i) => s + (i.kcal||0), 0);
+  $id('chefTotal').textContent = total + ' kcal';
+}
+
+function selectMood(m) {
+  state.selectedMood = m;
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('selected', +b.dataset.mood === m));
+}
+
+function updateDuration() { $id('durationVal').textContent = $id('durationSlider').value; }
+
+function updateSuggestedDuration(data) {
+  const volume = data.total_calories || 0;
+  const suggested = volume < 300 ? 10 : volume < 600 ? 15 : volume < 1000 ? 20 : 25;
+  $id('durationHint').textContent = `(AI 建议: ${suggested} min)`;
+  $id('durationSlider').value = suggested;
+  $id('durationVal').textContent = suggested;
+}
+
+function getCurrentMealData() {
+  let calories = 0, nutrients = {carb:0, prot:0, fat:0};
+  if(state.entryMode === 'ai') {
+    calories = +$id('aiTotalKcal').value || 0;
+    nutrients.carb = +$id('aiCarb').value || 0;
+    nutrients.prot = +$id('aiProt').value || 0;
+    nutrients.fat  = +$id('aiFat').value  || 0;
+  } else {
+    calories = state.foodItems.reduce((s,i)=>s+(i.kcal||0),0);
+    const totalW = state.foodItems.reduce((s,i)=>s+(i.weight||0),0) || 1;
+    nutrients.carb = Math.round(totalW * 0.5);
+    nutrients.prot = Math.round(totalW * 0.25);
+    nutrients.fat  = Math.round(totalW * 0.1);
+  }
+  return {
+    id: state.editingMealId || uid(),
+    timestamp: $id('mealTime').value || new Date().toISOString().slice(0,16),
+    images: [...state.currentImages],
+    description: $id('mealDesc').value.trim(),
+    food_items: state.entryMode === 'chef' ? [...state.foodItems] : (state.aiResultData?.food_list || []),
+    total_calories: calories,
+    nutrients,
+    duration: { suggested: 20, actual: +$id('durationSlider').value },
+    mood_score: state.selectedMood,
+    is_template: false
+  };
+}
+
+function saveMeal() {
+  const meal = getCurrentMealData();
+  if(!meal.total_calories && !state.currentImages.length && !meal.food_items.length) {
+    showToast('请先录入食物信息'); return;
+  }
+  if(state.editingMealId) {
+    const idx = state.meals.findIndex(m => m.id === state.editingMealId);
+    if(idx >= 0) state.meals[idx] = meal;
+    state.editingMealId = null;
+  } else {
+    state.meals.unshift(meal);
+  }
+  saveData();
+  showToast('✅ 记录已保存！');
+  state.currentImages = [];
+  state.foodItems = [];
+  state.aiResultData = null;
+  navTo('home');
+}
+
+function deleteCurrentEntry() {
+  if(!state.editingMealId) return;
+  if(confirm('确认删除这条记录？')) {
+    state.meals = state.meals.filter(m => m.id !== state.editingMealId);
+    saveData();
+    state.editingMealId = null;
+    showToast('已删除');
+    navTo('home');
+  }
+}
+
+function editMeal(id) {
+  const meal = state.meals.find(m => m.id === id);
+  if(!meal) return;
+  state.editingMealId = id;
+  navTo('entry');
+  setTimeout(() => {
+    state.currentImages = [...(meal.images||[])];
+    $id('mealDesc').value = meal.description||'';
+    const t = meal.timestamp;
+    $id('mealTime').value = t.length === 16 ? t : t.slice(0,16);
+    $id('durationSlider').value = meal.duration?.actual||20;
+    $id('durationVal').textContent = meal.duration?.actual||20;
+    selectMood(meal.mood_score||3);
+    renderEntryImages();
+    if(meal.food_items && meal.food_items.length > 0) {
+      switchMode('chef');
+      state.foodItems = [...meal.food_items];
+      renderFoodItems();
+    } else {
+      switchMode('ai');
+      $id('aiTotalKcal').value = meal.total_calories||0;
+      $id('aiCarb').value = meal.nutrients?.carb||0;
+      $id('aiProt').value = meal.nutrients?.prot||0;
+      $id('aiFat').value  = meal.nutrients?.fat ||0;
+      $id('aiResult').style.display = 'block';
+    }
+  }, 50);
+}
+
+// ===================== LOGS PAGE =====================
+function renderLogs() {
+  const date = state.logsDate;
+  const d = new Date(date);
+  const isToday = date === todayStr();
+  $id('logsTitle').textContent = isToday ? '今日饮食日志' : `${d.getMonth()+1}月${d.getDate()}日`;
+  const meals = getDayMeals(date);
+  const container = $id('logsList');
+  if(!meals.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📓</div><p>这天还没有记录</p></div>';
+    return;
+  }
+  container.innerHTML = '';
+  meals.forEach(meal => {
+    const card = document.createElement('div'); card.className = 'meal-card';
+    const hasImg = meal.images && meal.images.length > 0;
+    const thumbHtml = hasImg
+      ? `<div class="meal-thumb" onclick="openImgFull('${meal.images[0]}')"><img src="${meal.images[0]}" alt=""></div>`
+      : `<div class="meal-thumb"><span style="font-size:28px">🍽️</span></div>`;
+    card.innerHTML = `
+      <div class="meal-card-header">
+        ${thumbHtml}
+        <div class="meal-info">
+          <div class="meal-time">${formatTime(meal.timestamp)} · ${getMealTypeName(meal.timestamp)} ${moodEmoji(meal.mood_score)}</div>
+          <div class="meal-desc">${meal.description || '无备注'}</div>
+          <div class="meal-meta">
+            <span>🔥 ${meal.total_calories||0} kcal</span>
+            <span>🕒 ${meal.duration?.actual||'--'} min</span>
+          </div>
+        </div>
+      </div>
+      <div class="meal-actions">
+        <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="editMeal('${meal.id}')">📝 编辑</button>
+        <button class="btn btn-danger" style="flex:1;font-size:13px" onclick="deleteMeal('${meal.id}')">🗑️ 删除</button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function deleteMeal(id) {
+  if(confirm('确认删除这条记录？')) {
+    state.meals = state.meals.filter(m => m.id !== id);
+    saveData();
+    renderLogs();
+    showToast('已删除');
+  }
+}
+
+function showDatePicker() {
+  const d = prompt('输入日期 (格式 YYYY-MM-DD):', state.logsDate);
+  if(d && /^\d{4}-\d{2}-\d{2}$/.test(d)) { state.logsDate = d; renderLogs(); }
+}
+
+// ===================== HISTORY PAGE =====================
+function renderHistory() {
+  const today = new Date();
+  let labels = [], data = [], totalCarb=0, totalProt=0, totalFat=0, days=0;
+  if(state.historyView === 'week') {
+    for(let i=6; i>=0; i--) {
+      const d = new Date(today); d.setDate(d.getDate()-i);
+      const ds = d.toISOString().split('T')[0];
+      const wday = ['日','一','二','三','四','五','六'][d.getDay()];
+      labels.push(wday);
+      const ms = getDayMeals(ds);
+      const kcal = ms.reduce((s,m)=>s+(m.total_calories||0),0);
+      data.push(kcal);
+      totalCarb += ms.reduce((s,m)=>s+(m.nutrients?.carb||0),0);
+      totalProt += ms.reduce((s,m)=>s+(m.nutrients?.prot||0),0);
+      totalFat  += ms.reduce((s,m)=>s+(m.nutrients?.fat ||0),0);
+      if(ms.length) days++;
+    }
+    $id('statsNutrientPeriod').textContent = '周平均';
+  } else {
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+    for(let i=1; i<=daysInMonth; i++) {
+      const ds = `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
+      labels.push(i%5===0 ? i+'' : '');
+      const ms = getDayMeals(ds);
+      const kcal = ms.reduce((s,m)=>s+(m.total_calories||0),0);
+      data.push(kcal);
+      totalCarb += ms.reduce((s,m)=>s+(m.nutrients?.carb||0),0);
+      totalProt += ms.reduce((s,m)=>s+(m.nutrients?.prot||0),0);
+      totalFat  += ms.reduce((s,m)=>s+(m.nutrients?.fat ||0),0);
+      if(ms.length) days++;
+    }
+    $id('statsNutrientPeriod').textContent = '月平均';
+  }
+  renderTrendChart(labels, data);
+  const nutriTotal = totalCarb + totalProt + totalFat;
+  if(nutriTotal > 0) {
+    const cp = Math.round(totalCarb/nutriTotal*100);
+    const pp = Math.round(totalProt/nutriTotal*100);
+    const fp = 100-cp-pp;
+    $id('sCarb').style.width=cp+'%'; $id('sCarbPct').textContent=cp+'%';
+    $id('sProt').style.width=pp+'%'; $id('sProtPct').textContent=pp+'%';
+    $id('sFat').style.width=fp+'%';  $id('sFatPct').textContent=fp+'%';
+  } else {
+    $id('sCarb').style.width='0%'; $id('sCarbPct').textContent='--';
+    $id('sProt').style.width='0%'; $id('sProtPct').textContent='--';
+    $id('sFat').style.width='0%';  $id('sFatPct').textContent='--';
+  }
+  const goal = state.settings.kcalGoal||2000;
+  const avgKcal = days ? Math.round(data.filter(x=>x>0).reduce((a,b)=>a+b,0)/days) : 0;
+  const overDays = data.filter(x=>x>goal).length;
+  const underDays = data.filter((x,i)=>x>0&&x<goal*0.5).length;
+  let summary = '';
+  if(!days) summary = '该时段内还没有饮食记录。';
+  else {
+    summary = `本${state.historyView==='week'?'周':'月'}平均每日摄入约 ${avgKcal} kcal。`;
+    if(overDays) summary += `有 ${overDays} 天超过目标（${goal}kcal）。`;
+    if(underDays) summary += `有 ${underDays} 天摄入不足一半。`;
+    if(!overDays && !underDays) summary += '整体控制得很不错！💪';
+  }
+  $id('statsSummaryText').textContent = summary;
+  renderRecentLogs();
+}
+
+function renderTrendChart(labels, data) {
+  const ctx = $id('trendChart');
+  if(state.trendChart) { state.trendChart.destroy(); state.trendChart = null; }
+  const goal = state.settings.kcalGoal || 2000;
+  const isDark = state.settings.theme === 'dark';
+  const textColor = isDark ? '#a8c0a6' : '#888';
+  state.trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: '热量', data, fill: true, backgroundColor: 'rgba(127,168,124,.15)', borderColor: '#7fa87c', borderWidth: 2, pointBackgroundColor: data.map(v => v > goal ? '#e05555' : '#7fa87c'), pointRadius: 4, tension: 0.3 },
+        { label: '目标', data: labels.map(()=>goal), borderColor: '#e89a2a', borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.dataset.label+': '+ctx.parsed.y+' kcal' } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: textColor, font: { size: 11 }, autoSkip: false, maxRotation: 0 } },
+        y: { grid: { color: isDark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.05)' }, ticks: { color: textColor, font: { size: 11 }, callback: v => v > 0 ? v : '' } }
+      }
+    }
+  });
+}
+
+function renderRecentLogs() {
+  const container = $id('recentLogs');
+  const recent = [...state.meals].sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).slice(0,10);
+  if(!recent.length) { container.innerHTML = '<p style="font-size:13px;color:var(--text3)">暂无记录</p>'; return; }
+  container.innerHTML = '';
+  recent.forEach(m => {
+    const d = document.createElement('div');
+    d.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)';
+    d.innerHTML = `
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${moodEmoji(m.mood_score)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">${formatDate(m.timestamp)} ${getMealTypeName(m.timestamp)}</div>
+        <div style="font-size:12px;color:var(--text3)">${m.description||'无备注'}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:14px;font-weight:500">${m.total_calories||0}</div>
+        <div style="font-size:11px;color:var(--text3)">kcal</div>
+      </div>
+    `;
+    container.appendChild(d);
+  });
+}
+
+function switchHistView(v) {
+  state.historyView = v;
+  $id('histWeek').classList.toggle('active', v==='week');
+  $id('histMonth').classList.toggle('active', v==='month');
+  renderHistory();
+}
+
+function showWeekPicker() {
+  const view = confirm('点击确定查看本周，取消查看本月') ? 'week' : 'month';
+  switchHistView(view);
+}
+
+// ===================== SETTINGS =====================
+function loadSettingsUI() {
+  const s = state.settings;
+  $id('setHeight').value = s.height||'';
+  $id('setWeight').value = s.weight||'';
+  $id('setKcalGoal').value = s.kcalGoal||2000;
+  $id('setGoal').value = s.goal||'reduce';
+  $id('setGeminiKey').value = s.geminiKey||'';
+  $id('setSupabaseUrl').value = s.supabaseUrl||'';
+  $id('setSupabaseKey').value = s.supabaseKey||'';
+  document.querySelectorAll('#themeGroup .radio-option').forEach(el => el.classList.toggle('selected', el.dataset.theme===s.theme));
+  document.querySelectorAll('#aiStyleGroup .radio-option').forEach(el => el.classList.toggle('selected', el.dataset.style===s.aiStyle));
+  renderTemplateList();
+}
+
+function selectTheme(t) {
+  state.settings.theme = t;
+  document.querySelectorAll('#themeGroup .radio-option').forEach(el => el.classList.toggle('selected', el.dataset.theme===t));
+  applyTheme(t);
+}
+
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t === 'green' ? '' : t;
+  document.documentElement.removeAttribute('data-theme');
+  if(t !== 'green') document.documentElement.setAttribute('data-theme', t);
+}
+
+function selectAIStyle(s) {
+  state.settings.aiStyle = s;
+  document.querySelectorAll('#aiStyleGroup .radio-option').forEach(el => el.classList.toggle('selected', el.dataset.style===s));
+}
+
+function renderTemplateList() {
+  const list = $id('templateList');
+  if(!state.templates.length) { list.innerHTML = '<p style="font-size:13px;color:var(--text3)">还没有保存任何模板</p>'; return; }
+  list.innerHTML = '';
+  state.templates.forEach((t, idx) => {
+    const d = document.createElement('div'); d.className = 'template-item';
+    d.innerHTML = `
+      <div class="template-name">${t.name}</div>
+      <div style="font-size:12px;color:var(--text3)">${t.items.length}样食材</div>
+      <button class="btn btn-secondary" style="font-size:12px;padding:6px 10px" onclick="loadTemplate(${idx})">使用</button>
+      <button class="btn btn-danger" style="font-size:12px;padding:6px 10px" onclick="deleteTemplate(${idx})">删除</button>
+    `;
+    list.appendChild(d);
+  });
+}
+
+function saveAsTemplate() {
+  if(!state.foodItems.length) { showToast('请先添加食材'); return; }
+  $id('templateName').value = '';
+  showModal('templateModal');
+}
+
+function confirmSaveTemplate() {
+  const name = $id('templateName').value.trim();
+  if(!name) { showToast('请输入模板名称'); return; }
+  state.templates.push({ id: uid(), name, items: [...state.foodItems] });
+  saveTemplates();
+  closeModal('templateModal');
+  showToast('✅ 模板已保存！');
+}
+
+function loadTemplate(idx) {
+  state.foodItems = [...state.templates[idx].items.map(i=>({...i, id:uid()}))];
+  switchMode('chef');
+  renderFoodItems();
+  closeModal('templatePickModal');
+  showToast('✅ 已加载模板');
+}
+
+function deleteTemplate(idx) {
+  if(confirm('删除这个模板？')) { state.templates.splice(idx,1); saveTemplates(); renderTemplateList(); }
+}
+
+// ===================== GEMINI API =====================
+async function callGeminiRecognize(images, text) {
+  const key = state.settings.geminiKey;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+  const parts = [];
+  for(const img of images) {
+    const [header, data] = img.split(',');
+    const mime = header.match(/:(.*?);/)[1];
+    parts.push({ inlineData: { mimeType: mime, data } });
+  }
+  if(text) parts.push({ text: `用户备注：${text}` });
+  parts.push({ text: `请分析图片中的食物，返回严格的JSON格式（不要Markdown代码块）：
+{
+  "food_list": [{"name":"食物名","weight":100,"calories":200}],
+  "total_calories": 数字,
+  "nutrients": {"carb":数字,"prot":数字,"fat":数字},
+  "comment": "简短描述"
+}
+所有数字单位：热量为kcal，营养素为g。` });
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts }] })
+  });
+  if(!resp.ok) { const err = await resp.json(); throw new Error(err.error?.message || resp.status); }
+  const json = await resp.json();
+  let raw = json.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+  raw = raw.replace(/```json?/gi,'').replace(/```/g,'').trim();
+  return JSON.parse(raw);
+}
+
+async function callGeminiKcal(name, weight) {
+  const key = state.settings.geminiKey;
+  if(!key) return Math.round(weight * 1.5);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: `${name} ${weight}g 的热量是多少kcal？只返回一个整数，不要其他文字。` }] }] })
+  });
+  const json = await resp.json();
+  const num = parseInt(json.candidates?.[0]?.content?.parts?.[0]?.text || '0');
+  return isNaN(num) ? Math.round(weight*1.5) : num;
+}
+
+async function callGeminiText(prompt) {
+  const key = state.settings.geminiKey;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+  });
+  const json = await resp.json();
+  return json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+// ===================== DATA EXPORT/IMPORT =====================
+function exportData() {
+  const data = { meals: state.meals, settings: state.settings, templates: state.templates, exportTime: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `bitewise_backup_${todayStr()}.json`;
+  a.click();
+  showToast('📤 导出成功！');
+}
+
+function triggerImport() { $id('importFile').click(); }
+
+function importData(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      if(d.meals) state.meals = d.meals;
+      if(d.settings) state.settings = Object.assign(state.settings, d.settings);
+      if(d.templates) state.templates = d.templates;
+      saveData(); localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings)); saveTemplates();
+      showToast('✅ 导入成功！');
+      refreshHome();
+    } catch(err) { showToast('导入失败，文件格式有误'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function clearAllData() {
+  if(confirm('⚠️ 确认清除所有饮食记录？此操作不可逆！')) {
+    state.meals = [];
+    saveData();
+    showToast('已清除所有记录');
+    refreshHome();
+  }
+}
+
+// ===================== MISC =====================
+function openImgFull(src) {
+  $id('imgFullImg').src = src;
+  $id('imgFullOverlay').classList.add('show');
+}
+function closeImgFull() { $id('imgFullOverlay').classList.remove('show'); }
+
+function toggleApiVis(inputId, btn) {
+  const inp = $id(inputId);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+// ===================== INIT =====================
+loadAll();
+applyTheme(state.settings.theme);
+const entryNow = new Date(); entryNow.setMinutes(entryNow.getMinutes()-entryNow.getTimezoneOffset());
+$id('mealTime').value = entryNow.toISOString().slice(0,16);
+refreshHome();
+</script>
+</body>
+</html>
