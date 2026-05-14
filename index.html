@@ -1323,10 +1323,18 @@ async function callSiliconFlowRecognize(images, text) {
   const url = 'https://api.siliconflow.cn/v1/chat/completions';
   const content = [];
   for(const img of images) {
+    // 硅基流动支持 base64 格式: data:image/xxx;base64,xxx
     content.push({ type: 'image_url', image_url: { url: img } });
   }
   if(text) content.push({ type: 'text', text: `用户备注：${text}` });
-  content.push({ type: 'text', text: `请分析图片中的食物，返回严格的JSON格式（不要Markdown代码块）：
+  content.push({ type: 'text', text: `请仔细分析用户上传的食物图片，识别图片中的具体食物种类和分量，估算其营养成分。
+
+要求：
+1. 必须基于图片内容进行分析，不要返回空值或0
+2. 如果图片中有多种食物，请分别列出
+3. 返回严格的JSON格式（不要Markdown代码块）
+
+格式：
 {
   "food_list": [{"name":"食物名","weight":100,"calories":200}],
   "total_calories": 数字,
