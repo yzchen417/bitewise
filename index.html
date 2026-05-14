@@ -1346,7 +1346,7 @@ async function callSiliconFlowRecognize(images, text) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
     body: JSON.stringify({
-      model: 'Qwen/Qwen3-VL-8B-Instruct',
+      model: 'Qwen/Qwen3.6-35B-A3B',
       messages: [{ role: 'user', content }],
       max_tokens: 1024
     })
