@@ -460,10 +460,36 @@
     </div>
     <!-- API 配置 -->
     <div class="card">
-      <div class="card-title">🔑 开发者设置 <span class="tag">仅本地保存</span></div>
-      <div style="margin-bottom:10px">
+      <div class="card-title">🔑 AI 服务配置 <span class="tag">仅本地保存</span></div>
+      <div style="margin-bottom:12px">
+        <label>AI 服务</label>
+        <div class="seg-ctrl" id="aiProviderGroup" style="margin-top:6px">
+          <button class="seg-btn active" data-provider="siliconflow" onclick="selectAIProvider('siliconflow')">☁️ 硅基流动</button>
+          <button class="seg-btn" data-provider="groq" onclick="selectAIProvider('groq')">🚀 Groq</button>
+          <button class="seg-btn" data-provider="gemini" onclick="selectAIProvider('gemini')">🔵 Gemini</button>
+        </div>
+      </div>
+      <div id="siliconKeyWrap" style="margin-bottom:10px">
+        <label>硅基流动 API Key</label>
+        <p style="font-size:11px;color:var(--text3);margin:4px 0 8px 0">用于 AI 拍照识别食物营养成分（默认服务）</p>
+        <div class="api-input-wrap">
+          <input type="password" id="setSiliconKey" placeholder="sk-...">
+          <button class="api-toggle-btn" onclick="toggleApiVis('setSiliconKey', this)">👁</button>
+        </div>
+        <p style="font-size:11px;color:var(--text3);margin-top:4px">获取地址: <a href="https://cloud.siliconflow.cn" target="_blank" style="color:var(--primary)">cloud.siliconflow.cn</a></p>
+      </div>
+      <div id="groqKeyWrap" style="margin-bottom:10px;display:none">
+        <label>Groq API Key</label>
+        <p style="font-size:11px;color:var(--text3);margin:4px 0 8px 0">使用 Groq 的 Llama Vision 模型进行食物识别</p>
+        <div class="api-input-wrap">
+          <input type="password" id="setGroqKey" placeholder="gsk_...">
+          <button class="api-toggle-btn" onclick="toggleApiVis('setGroqKey', this)">👁</button>
+        </div>
+        <p style="font-size:11px;color:var(--text3);margin-top:4px">获取地址: <a href="https://console.groq.com/keys" target="_blank" style="color:var(--primary)">console.groq.com</a></p>
+      </div>
+      <div id="geminiKeyWrap" style="margin-bottom:10px;display:none">
         <label>Gemini API Key</label>
-        <p style="font-size:11px;color:var(--text3);margin:4px 0 8px 0">用于 AI 拍照识别食物营养成分，开启后点击录入页拍照按钮即可使用</p>
+        <p style="font-size:11px;color:var(--text3);margin:4px 0 8px 0">使用 Google Gemini 进行食物识别</p>
         <div class="api-input-wrap">
           <input type="password" id="setGeminiKey" placeholder="AIza...">
           <button class="api-toggle-btn" onclick="toggleApiVis('setGeminiKey', this)">👁</button>
@@ -537,7 +563,8 @@ let state = {
   settings: {
     height: 175, weight: 70, kcalGoal: 2000, goal: 'reduce',
     theme: 'green', aiStyle: 'warm',
-    geminiKey: '', supabaseUrl: '', supabaseKey: ''
+    geminiKey: '', groqKey: '', siliconKey: '', aiProvider: 'siliconflow',
+    supabaseUrl: '', supabaseKey: ''
   },
   templates: [],
   currentPage: 'home',
@@ -569,6 +596,9 @@ function saveSettings() {
   s.kcalGoal = +$id('setKcalGoal').value || s.kcalGoal;
   s.goal = $id('setGoal').value;
   s.geminiKey = $id('setGeminiKey').value.trim();
+  s.groqKey = $id('setGroqKey').value.trim();
+  s.siliconKey = $id('setSiliconKey').value.trim();
+  s.aiProvider = state.settings.aiProvider;
   s.supabaseUrl = $id('setSupabaseUrl').value.trim();
   s.supabaseKey = $id('setSupabaseKey').value.trim();
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
@@ -811,14 +841,23 @@ function switchMode(mode) {
 
 async function doRecognize() {
   if(!state.currentImages.length) { showToast('请先上传图片'); return; }
-  const key = state.settings.geminiKey;
-  if(!key) { showToast('请先在设置中填入 Gemini API Key'); return; }
+  const provider = state.settings.aiProvider || 'siliconflow';
+  const key = provider === 'siliconflow' ? state.settings.siliconKey
+    : provider === 'groq' ? state.settings.groqKey
+    : state.settings.geminiKey;
+  if(!key) {
+    const names = {siliconflow:'硅基流动',groq:'Groq',gemini:'Gemini'};
+    showToast('请先在设置中填入 ' + names[provider] + ' API Key'); return;
+  }
   $id('recogSpinner').style.display = 'inline-block';
   $id('recognizeBtn').disabled = true;
   $id('aiResult').style.display = 'none';
   try {
     const desc = $id('mealDesc').value || '';
-    const data = await callGeminiRecognize(state.currentImages, desc);
+    let data;
+    if(provider === 'siliconflow') data = await callSiliconFlowRecognize(state.currentImages, desc);
+    else if(provider === 'groq') data = await callGroqRecognize(state.currentImages, desc);
+    else data = await callGeminiRecognize(state.currentImages, desc);
     state.aiResultData = data;
     $id('aiTotalKcal').value = data.total_calories || '';
     $id('aiCarb').value = data.nutrients?.carb || '';
@@ -829,7 +868,11 @@ async function doRecognize() {
     updateSuggestedDuration(data);
     showToast('✅ 识别成功！');
   } catch(err) {
-    showToast('识别失败：'+(err.message||'请检查 API Key'), 3000);
+    let msg = err.message || '未知错误';
+    if(msg.includes('API key not valid') || msg.includes('invalid_api_key') || msg.includes('Unauthorized')) {
+      msg = 'API Key 无效，请在设置中检查';
+    }
+    showToast('识别失败：' + msg, 3000);
   } finally {
     $id('recogSpinner').style.display = 'none';
     $id('recognizeBtn').disabled = false;
@@ -1187,6 +1230,9 @@ function loadSettingsUI() {
   $id('setKcalGoal').value = s.kcalGoal||2000;
   $id('setGoal').value = s.goal||'reduce';
   $id('setGeminiKey').value = s.geminiKey||'';
+  $id('setGroqKey').value = s.groqKey||'';
+  $id('setSiliconKey').value = s.siliconKey||'';
+  selectAIProvider(s.aiProvider || 'siliconflow', true);
   $id('setSupabaseUrl').value = s.supabaseUrl||'';
   $id('setSupabaseKey').value = s.supabaseKey||'';
   document.querySelectorAll('#themeGroup .radio-option').forEach(el => el.classList.toggle('selected', el.dataset.theme===s.theme));
@@ -1209,6 +1255,15 @@ function applyTheme(t) {
 function selectAIStyle(s) {
   state.settings.aiStyle = s;
   document.querySelectorAll('#aiStyleGroup .radio-option').forEach(el => el.classList.toggle('selected', el.dataset.style===s));
+}
+
+function selectAIProvider(provider, silent) {
+  state.settings.aiProvider = provider;
+  document.querySelectorAll('#aiProviderGroup .seg-btn').forEach(el => el.classList.toggle('active', el.dataset.provider===provider));
+  $id('siliconKeyWrap').style.display = provider==='siliconflow' ? 'block' : 'none';
+  $id('groqKeyWrap').style.display = provider==='groq' ? 'block' : 'none';
+  $id('geminiKeyWrap').style.display = provider==='gemini' ? 'block' : 'none';
+  if(!silent) showToast('已切换到 ' + {siliconflow:'硅基流动',groq:'Groq',gemini:'Gemini'}[provider]);
 }
 
 function renderTemplateList() {
@@ -1252,6 +1307,72 @@ function loadTemplate(idx) {
 
 function deleteTemplate(idx) {
   if(confirm('删除这个模板？')) { state.templates.splice(idx,1); saveTemplates(); renderTemplateList(); }
+}
+
+// ===================== SILICONFLOW API =====================
+async function callSiliconFlowRecognize(images, text) {
+  const key = state.settings.siliconKey;
+  const url = 'https://api.siliconflow.cn/v1/chat/completions';
+  const content = [];
+  for(const img of images) {
+    content.push({ type: 'image_url', image_url: { url: img } });
+  }
+  if(text) content.push({ type: 'text', text: `用户备注：${text}` });
+  content.push({ type: 'text', text: `请分析图片中的食物，返回严格的JSON格式（不要Markdown代码块）：
+{
+  "food_list": [{"name":"食物名","weight":100,"calories":200}],
+  "total_calories": 数字,
+  "nutrients": {"carb":数字,"prot":数字,"fat":数字},
+  "comment": "简短描述"
+}
+所有数字单位：热量为kcal，营养素为g。` });
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({
+      model: 'Qwen/Qwen3-VL-8B-Instruct',
+      messages: [{ role: 'user', content }],
+      max_tokens: 1024
+    })
+  });
+  if(!resp.ok) { const err = await resp.json().catch(()=>({})); throw new Error(err.error?.message || err.message || resp.status); }
+  const json = await resp.json();
+  let raw = json.choices?.[0]?.message?.content || '{}';
+  raw = raw.replace(/```json?/gi,'').replace(/```/g,'').trim();
+  return JSON.parse(raw);
+}
+
+// ===================== GROQ API =====================
+async function callGroqRecognize(images, text) {
+  const key = state.settings.groqKey;
+  const url = 'https://api.groq.com/openai/v1/chat/completions';
+  const content = [];
+  for(const img of images) {
+    content.push({ type: 'image_url', image_url: { url: img } });
+  }
+  if(text) content.push({ type: 'text', text: `用户备注：${text}` });
+  content.push({ type: 'text', text: `请分析图片中的食物，返回严格的JSON格式（不要Markdown代码块）：
+{
+  "food_list": [{"name":"食物名","weight":100,"calories":200}],
+  "total_calories": 数字,
+  "nutrients": {"carb":数字,"prot":数字,"fat":数字},
+  "comment": "简短描述"
+}
+所有数字单位：热量为kcal，营养素为g。` });
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({
+      model: 'llama-3.2-11b-vision-preview',
+      messages: [{ role: 'user', content }],
+      max_tokens: 1024
+    })
+  });
+  if(!resp.ok) { const err = await resp.json().catch(()=>({})); throw new Error(err.error?.message || err.message || resp.status); }
+  const json = await resp.json();
+  let raw = json.choices?.[0]?.message?.content || '{}';
+  raw = raw.replace(/```json?/gi,'').replace(/```/g,'').trim();
+  return JSON.parse(raw);
 }
 
 // ===================== GEMINI API =====================
