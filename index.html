@@ -858,12 +858,20 @@ async function doRecognize() {
     if(provider === 'siliconflow') data = await callSiliconFlowRecognize(state.currentImages, desc);
     else if(provider === 'groq') data = await callGroqRecognize(state.currentImages, desc);
     else data = await callGeminiRecognize(state.currentImages, desc);
+    // 调试日志：打印 AI 返回的原始数据
+    console.log('[BiteWise] AI 返回原始数据:', JSON.stringify(data, null, 2));
     state.aiResultData = data;
-    $id('aiTotalKcal').value = data.total_calories || '';
-    $id('aiCarb').value = data.nutrients?.carb || '';
-    $id('aiProt').value = data.nutrients?.prot || '';
-    $id('aiFat').value  = data.nutrients?.fat  || '';
-    $id('aiRecogDesc').textContent = data.food_list ? '识别到：' + data.food_list.map(f=>f.name).join('、') : '';
+    // 提取数据（兼容多种可能的字段名）
+    const totalCal = data.total_calories ?? data.calories ?? data.kcal ?? data.energy ?? 0;
+    const carb = data.nutrients?.carb ?? data.nutrition?.carb ?? data.carb ?? data.carbohydrate ?? 0;
+    const prot = data.nutrients?.prot ?? data.nutrition?.prot ?? data.protein ?? data.prot ?? 0;
+    const fat  = data.nutrients?.fat  ?? data.nutrition?.fat  ?? data.fat ?? 0;
+    $id('aiTotalKcal').value = totalCal || '';
+    $id('aiCarb').value = carb || '';
+    $id('aiProt').value = prot || '';
+    $id('aiFat').value  = fat  || '';
+    const foodList = data.food_list ?? data.foods ?? data.items ?? [];
+    $id('aiRecogDesc').textContent = foodList.length ? '识别到：' + foodList.map(f=>f.name||f).join('、') : '';
     $id('aiResult').style.display = 'block';
     updateSuggestedDuration(data);
     showToast('✅ 识别成功！');
