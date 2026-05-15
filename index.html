@@ -866,10 +866,10 @@ async function doRecognize() {
     const carb = data.nutrients?.carb ?? data.nutrition?.carb ?? data.carb ?? data.carbohydrate ?? 0;
     const prot = data.nutrients?.prot ?? data.nutrition?.prot ?? data.protein ?? data.prot ?? 0;
     const fat  = data.nutrients?.fat  ?? data.nutrition?.fat  ?? data.fat ?? 0;
-    $id('aiTotalKcal').value = totalCal || '';
-    $id('aiCarb').value = carb || '';
-    $id('aiProt').value = prot || '';
-    $id('aiFat').value  = fat  || '';
+    $id('aiTotalKcal').value = (totalCal != null && totalCal !== '') ? totalCal : '';
+    $id('aiCarb').value = (carb != null && carb !== '') ? carb : '';
+    $id('aiProt').value = (prot != null && prot !== '') ? prot : '';
+    $id('aiFat').value  = (fat  != null && fat  !== '') ? fat  : '';
     const foodList = data.food_list ?? data.foods ?? data.items ?? [];
     $id('aiRecogDesc').textContent = foodList.length ? '识别到：' + foodList.map(f=>f.name||f).join('、') : '';
     $id('aiResult').style.display = 'block';
@@ -957,7 +957,10 @@ function updateDuration() { $id('durationVal').textContent = $id('durationSlider
 
 function updateSuggestedDuration(data) {
   const volume = data.total_calories || 0;
-  const suggested = volume < 300 ? 10 : volume < 600 ? 15 : volume < 1000 ? 20 : 25;
+  // 进食时长建议：基于热量估算，鼓励细嚼慢咽（每100kcal约5分钟）
+  // 最少15分钟，最多45分钟
+  const suggested = volume <= 0 ? 20
+    : Math.min(45, Math.max(15, Math.round(volume / 100) * 5));
   $id('durationHint').textContent = `(AI 建议: ${suggested} min)`;
   $id('durationSlider').value = suggested;
   $id('durationVal').textContent = suggested;
