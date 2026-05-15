@@ -1357,8 +1357,14 @@ async function callSiliconFlowRecognize(images, text) {
   if(!resp.ok) { const err = await resp.json().catch(()=>({})); throw new Error(err.error?.message || err.message || resp.status); }
   const json = await resp.json();
   let raw = json.choices?.[0]?.message?.content || '{}';
+  console.log('[BiteWise] SiliconFlow 原始文本:', raw.slice(0, 500));
+  // Qwen3 思考模式会输出 <think>...</think>，需要去掉
+  raw = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
   raw = raw.replace(/```json?/gi,'').replace(/```/g,'').trim();
-  return JSON.parse(raw);
+  // 提取第一个完整 JSON 对象
+  const m1 = raw.match(/\{[\s\S]*\}/);
+  if(!m1) throw new Error('AI 返回格式异常，请重试');
+  return JSON.parse(m1[0]);
 }
 
 // ===================== GROQ API =====================
@@ -1391,7 +1397,9 @@ async function callGroqRecognize(images, text) {
   const json = await resp.json();
   let raw = json.choices?.[0]?.message?.content || '{}';
   raw = raw.replace(/```json?/gi,'').replace(/```/g,'').trim();
-  return JSON.parse(raw);
+  const m2 = raw.match(/\{[\s\S]*\}/);
+  if(!m2) throw new Error('AI 返回格式异常，请重试');
+  return JSON.parse(m2[0]);
 }
 
 // ===================== GEMINI API =====================
