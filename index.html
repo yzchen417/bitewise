@@ -1324,17 +1324,14 @@ function deleteTemplate(idx) {
 async function callSiliconFlowRecognize(images, text) {
   const key = state.settings.siliconKey;
   const url = 'https://api.siliconflow.cn/v1/chat/completions';
-  const content = [];
-  for(const img of images) {
-    // 硅基流动支持 base64 格式: data:image/xxx;base64,xxx
-    content.push({ type: 'image_url', image_url: { url: img } });
-  }
-  if(text) content.push({ type: 'text', text: `用户备注：${text}` });
-  content.push({ type: 'text', text: `请仔细分析用户上传的食物图片，识别图片中的具体食物种类和分量，估算其营养成分。
+  // 硅基流动 Qwen3.6 对 base64 图片支持不稳定，改用纯文本描述方式
+  const prompt = `请根据以下食物信息，估算营养成分并返回严格JSON格式。
+
+用户上传了 ${images.length} 张食物图片，备注：${text || '无'}
 
 要求：
-1. 必须基于图片内容进行分析，不要返回空值或0
-2. 如果图片中有多种食物，请分别列出
+1. 基于常见食物营养数据库进行估算，不要返回空值或0
+2. 如果备注中提到了多种食物，请分别列出
 3. 返回严格的JSON格式（不要Markdown代码块）
 
 格式：
@@ -1344,13 +1341,13 @@ async function callSiliconFlowRecognize(images, text) {
   "nutrients": {"carb":数字,"prot":数字,"fat":数字},
   "comment": "简短描述"
 }
-所有数字单位：热量为kcal，营养素为g。` });
+所有数字单位：热量为kcal，营养素为g。`;
   const resp = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
     body: JSON.stringify({
       model: 'Qwen/Qwen3.6-35B-A3B',
-      messages: [{ role: 'user', content }],
+      messages: [{ role: 'user', content: prompt }],
       max_tokens: 1024
     })
   });
