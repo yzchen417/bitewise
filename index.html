@@ -1330,14 +1330,7 @@ async function callSiliconFlowRecognize(images, text) {
     content.push({ type: 'image_url', image_url: { url: img, detail: 'high' } });
   }
   if(text) content.push({ type: 'text', text: '用户备注：' + text });
-  content.push({ type: 'text', text: '请仔细分析图片中的食物，返回严格JSON格式（不要Markdown代码块）：
-{
-  "food_list": [{"name":"食物名","weight":100,"calories":200}],
-  "total_calories": 数字,
-  "nutrients": {"carb":数字,"prot":数字,"fat":数字},
-  "comment": "简短描述"
-}
-所有数字单位：热量为kcal，营养素为g。' });
+  content.push({ type: 'text', text: '请仔细分析图片中的食物，返回严格JSON格式（不要Markdown代码块）：\n{"food_list":[{"name":"食物名","weight":100,"calories":200}],"total_calories":数字,"nutrients":{"carb":数字,"prot":数字,"fat":数字},"comment":"简短描述"}\n所有数字单位：热量为kcal，营养素为g。' });
   const resp = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
@@ -1351,9 +1344,9 @@ async function callSiliconFlowRecognize(images, text) {
   const json = await resp.json();
   let raw = json.choices?.[0]?.message?.content || '{}';
   console.log('[BiteWise] SiliconFlow 原始文本:', raw.slice(0, 500));
-  raw = raw.replace(/<think>[sS]*?</think>/gi, '').trim();
-  raw = raw.replace(//g,'').trim();
-  const m1 = raw.match(/{[sS]*}/);
+  raw = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  raw = raw.replace(/```json?/gi,'').replace(/```/g,'').trim();
+  const m1 = raw.match(/\{[\s\S]*\}/);
   if(!m1) throw new Error('AI 返回格式异常，请重试');
   return JSON.parse(m1[0]);
 }
